@@ -71,9 +71,9 @@
 
 \AtBeginEnvironment{table}{\def\insidetable{true}}
 
-\AtBeginEnvironment{tabular}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{12pt}{12pt}\selectfont\fi}
-\AtBeginEnvironment{longtable}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{12pt}{12pt}\selectfont\fi}
-\AtBeginEnvironment{tabularx}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{12pt}{12pt}\selectfont\fi}
+\AtBeginEnvironment{tabular}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{14pt}{14pt}\selectfont\fi}
+\AtBeginEnvironment{longtable}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{14pt}{14pt}\selectfont\fi}
+\AtBeginEnvironment{tabularx}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{14pt}{14pt}\selectfont\fi}
 
 \renewcommand{\arraystretch}{1.5} %расстояние между стрчоками в таблицах
 
@@ -247,6 +247,8 @@
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
 
+% Ссылка на рисунок в тексте (ГОСТ 7.32)
+\newcommand{\figref}[1]{рис.~\ref{#1}}
 
 
 %===================================================
@@ -392,7 +394,7 @@
 \usepackage[newfloat]{minted}
 \setminted{linenos=false,
 	style=vs,
-	fontsize=\fontsize{12pt}{12pt},
+	fontsize=\fontsize{14pt}{14pt},
 	tabsize=3,
 	frame=lines}
 %\usepackage{listings}
