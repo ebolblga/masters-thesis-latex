@@ -1,5 +1,5 @@
 % !TEX program = xelatex
-% !TEX options = --shell-escape -8bit -synctex=1 
+% !TEX options = --shell-escape -8bit -synctex=1
 % !BIB program = biber
 % !TEX encoding = UTF-8
 % !TEX spellcheck = ru_RU
@@ -12,7 +12,7 @@
 
 \input{preambule.tex}
 
-%Включаем подссветку ссылок для откладки документа	
+%Включаем подссветку ссылок для откладки документа
 \hypersetup{hidelinks=false}
 
 %Настройка документа
@@ -24,60 +24,64 @@
 \makeatother
 
 \begin{document}
-	
+
 	\sloppy
 	\hbadness=10000
-	
+
 	%Титульный лист
 	\newpage
 	\pagestyle{empty}
 	\input{title.tex}
-	
-	
+
+
 	%Задание на ВКР
 	\newpage
 	\pagestyle{empty}
 	\input{assignment.tex}
-	
-	
+
+
 	%Аннотация
 	\newpage
 	\pagestyle{empty}
 	\input{annotation.tex}
-	
+
 	%Оглавление
 	\newpage
 	\pagestyle{fancy}
 	\input{toc.tex}
-	 
+
+	%Перечень сокращений и специальных терминов
+	\newpage
+	\pagestyle{fancy}
+	\input{terms.tex}
+
     %Введение
 	\newpage
 	\pagestyle{fancy}
 	\input{intro.tex}
-	
+
 	%Глава1
 	\newpage
 	\pagestyle{fancy}
 	\input{ch1.tex}
-		
+
 	%Глава2
-	
-	
+
+
 	\FloatBarrier
 	\clearpage
 	\newpage
 	\pagestyle{fancy}
 	\input{ch2.tex}
 	\FloatBarrier
-	
+
 	%Глава3
 	\FloatBarrier
 	\clearpage
 	\newpage
 	\pagestyle{fancy}
 	\input{ch3.tex}
-	
-	
+
 	%Глава4
 	\FloatBarrier
 	\clearpage
@@ -85,48 +89,72 @@
 	\pagestyle{fancy}
 	\input{ch4.tex}
 	\FloatBarrier
-	
+
+	%Глава 5
+	\FloatBarrier
+	\clearpage
+	\newpage
+	\pagestyle{fancy}
+	\input{ch5.tex}
+	\FloatBarrier
+
+	%Глава 6
+	\FloatBarrier
+	\clearpage
+	\newpage
+	\pagestyle{fancy}
+	\input{ch6.tex}
+	\FloatBarrier
+
+	%Глава 7
+	\FloatBarrier
+	\clearpage
+	\newpage
+	\pagestyle{fancy}
+	\input{ch7.tex}
+	\FloatBarrier
+
 	%Заключение
 	\FloatBarrier
 	\clearpage
 	\newpage
 	\pagestyle{fancy}
 	\input{outro.tex}
-	
+
 	%Список литературы
 	\FloatBarrier
 	\clearpage
-	\newpage	
+	\newpage
 	\pagestyle{fancy}
 	\input{biblio.tex}
-	
+
 
 	%Счетчики кол-ва рисунков и книг.
-	\writetoaux{vkrTotalfigures}{\thevkrTotalfigures}	
+	\writetoaux{vkrTotalfigures}{\thevkrTotalfigures}
 	\writetoaux{vkrTotaltables}{\thevkrTotaltables}
 	\writetoaux{vkrTotalbooks}{\thevkrTotalbooks}
-	
-	
+
+
 	% ПРИЛОЖЕНИЯ
 	\newpage
 	\appendix
 	\label{vkr:AppendixBegin} %Закладка на страницу с началом первого приложнния
-	
+
 	\newpage
 	\pagestyle{fancy}
 	\input{app1.tex}
 	\FloatBarrier
-	
+
 	\newpage
 	\pagestyle{fancy}
 	\input{app2.tex}
 	\FloatBarrier
-	
+
 	\label{vkr:End} 	%Закладка на страницу с кокончанием последней страницы последнего приложения
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 \end{document}
