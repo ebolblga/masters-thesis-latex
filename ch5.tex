@@ -237,7 +237,166 @@
 \end{enumerate}
 
 \subsubsection{Реализация оценки расписания на языке Polars}
-WIP.
+
+Оценка расписания реализована в виде скалярной функции приспособленности
+$F(\mathcal{T})$, вычисляемой над таблицей студенческого расписания
+$\mathcal{T}$ с помощью библиотеки Polars.
+
+\paragraph{Жёсткие ограничения}
+Счётчики нарушений $P_{\mathrm{hard}}^{(k)}$ суммируются в
+\[
+P_{\mathrm{hard}} = \sum_{k} P_{\mathrm{hard}}^{(k)}.
+\]
+
+\textbf{Учебный план.}
+Фактическое число проведённых занятий:
+\[
+	A_{g,j,\tau} = \bigl|\{(g',d,s,j',\tau',\ell) \in \mathcal{A} :
+	g'=g,\; j'=j,\; \tau'=\tau\}\bigr|.
+\]
+\[
+P_{\mathrm{curriculum}}^{\mathrm{mismatch}} =
+\sum_{g,j,\tau} \bigl| A_{g,j,\tau} - E_{g,j,\tau} \bigr|
+\]
+
+\[
+P_{\mathrm{curriculum}}^{\mathrm{extra}} =
+\sum_{(g,j,\tau):\,(g,j,\tau)\notin \mathrm{plan}} A_{g,j,\tau}
+\]
+
+\textbf{Календарь.}
+Пусть $\mathcal{W}$ --- множество дат в семестре,
+$\mathcal{H}$ --- праздничные дни:
+\[
+P_{\mathrm{calendar}} =
+\bigl|\{(g,d,s,\ldots)\in\mathcal{A} : d \notin \mathcal{W}\}\bigr|
++ \bigl|\{(g,d,s,\ldots)\in\mathcal{A} : d \in \mathcal{H}\}\bigr|.
+\]
+
+\textbf{Временные слоты:}
+\[
+P_{\mathrm{slot}} =
+\bigl|\{(g,d,s,\ldots)\in\mathcal{A} : s < 0 \;\vee\; s \geq 8\}\bigr|.
+\]
+
+\textbf{Конфликт группы} (две дисциплины в одной ячейке):
+\[
+P_{\mathrm{group}} =
+\sum_{\substack{(g,d,s)\\ \text{дубль}}}
+\bigl(\mathrm{count}(g,d,s) - 1\bigr).
+\]
+
+\textbf{Конфликт преподавателя.}
+Потоковая лекция (один преподаватель, одна дисциплина и тип, несколько
+групп в одном слоте) \emph{не} считается нарушением. Конфликт ---
+разные пары $(j,\tau)$ у одного $(\ell,d,s)$:
+\[
+P_{\mathrm{lecturer}}^{\mathrm{dup}} =
+\sum_{\substack{(\ell,d,s)\\ n_{\mathrm{sess}}>1}}
+\bigl(n_{\mathrm{sess}}(\ell,d,s) - 1\bigr),
+\]
+где $n_{\mathrm{sess}}(\ell,d,s)$ --- число уникальных пар
+$(j,\tau)$ в данном слоте.
+Дополнительно:
+\[
+\begin{aligned}
+	P_{\mathrm{lecturer}}^{\mathrm{invalid}} &=
+	\bigl|\text{занятия, где } (\ell,j) \notin \text{SubjectLecturers}\bigr|
+\end{aligned}
+\]
+
+\[
+\begin{aligned}
+	P_{\mathrm{lecturer}}^{\mathrm{null}} &=
+	\bigl|\text{занятия с } \ell = \texttt{null}\bigr|
+\end{aligned}
+\]
+
+Итого:
+\[
+P_{\mathrm{hard}} =
+P_{\mathrm{curriculum}}^{\mathrm{mismatch}}
++ P_{\mathrm{curriculum}}^{\mathrm{extra}}
++ P_{\mathrm{calendar}}
++ P_{\mathrm{slot}}
++ P_{\mathrm{group}}
++ P_{\mathrm{lecturer}}^{\mathrm{dup}}
++ P_{\mathrm{lecturer}}^{\mathrm{invalid}}
++ P_{\mathrm{lecturer}}^{\mathrm{null}}.
+\]
+
+Решение \emph{допустимо} ($\mathrm{feasible}=\mathrm{true}$), если
+$P_{\mathrm{hard}}=0$.
+
+\paragraph{Мягкие критерии}
+Каждый критерий нормируется в интервал $(0,1]$ по схеме
+$q = 1/(1 + p)$, где $p$ --- штраф (чем меньше $p$, тем выше $q$).
+
+\textbf{Непрерывность (окна).}
+Для группы $g$ и дня $d$ пусть $S_{g,d} = \{s_1,\ldots,s_k\}$ ---
+упорядоченное множество занятых слотов, $k \geq 2$:
+\[
+	\omega_{g,d} = (\max S_{g,d} - \min S_{g,d} + 1) - k.
+\]
+\[
+	W = \sum_{g,d} \omega_{g,d}, \qquad
+	q_{\mathrm{win}} = \frac{1}{1 + W}.
+\]
+
+\textbf{Равномерность загруженности.}
+Для группы $g$ по дням недели $w$:
+$n_{g,w}$ --- число пар в семестре. Коэффициент вариации:
+\[
+	\mathrm{CV}_g =
+	\frac{\sigma(\{n_{g,w}\}_w)}{\mu(\{n_{g,w}\}_w) + \varepsilon},
+	\qquad \varepsilon = 10^{-9}.
+\]
+\[
+	\overline{\mathrm{CV}} = \frac{1}{|G|}\sum_{g\in G} \mathrm{CV}_g, \qquad
+	q_{\mathrm{load}} = \frac{1}{1 + \overline{\mathrm{CV}}}.
+\]
+
+\textbf{Равномерность начала занятий.}
+Для каждой пары $(g,j,\tau)$ по всем вхождениям вычисляется
+$\sigma_{g,j,\tau} = \mathrm{std}(\{s\})$; затем
+\[
+	\overline{\sigma} = \frac{1}{N_{\mathrm{pairs}}}\sum_{g,j,\tau} \sigma_{g,j,\tau},
+	\qquad
+	q_{\mathrm{start}} = \frac{1}{1 + \overline{\sigma}}.
+\]
+
+\textbf{Равномерность идентичности по дням недели.}
+Для $(g,j,\tau,w)$ пусть $U_{g,j,\tau,w}$ --- число различных слотов
+на всех датах $d$ с $\mathrm{weekday}(d)=w$:
+\[
+	\pi_{g,j,\tau,w} = \max(0,\; U_{g,j,\tau,w} - 1), \qquad
+	\Pi = \sum_{g,j,\tau,w} \pi_{g,j,\tau,w}, \qquad
+	q_{\mathrm{pat}} = \frac{1}{1 + \Pi}.
+\]
+
+\paragraph{Итоговая функция приспособленности.}
+Веса мягких компонент $w_{\mathrm{win}}=w_{\mathrm{load}}=
+w_{\mathrm{start}}=w_{\mathrm{pat}}=1$,
+$\lambda_{\mathrm{soft}} = 1000$,
+$\lambda_{\mathrm{hard}} = 10^{6}$:
+\[
+	Q_{\mathrm{soft}} =
+	w_{\mathrm{win}}\, q_{\mathrm{win}}
+	+ w_{\mathrm{load}}\, q_{\mathrm{load}}
+	+ w_{\mathrm{start}}\, q_{\mathrm{start}}
+	+ w_{\mathrm{pat}}\, q_{\mathrm{pat}},
+\]
+\[
+	\boxed{
+		F(\mathcal{T}) =
+		\lambda_{\mathrm{soft}}\, Q_{\mathrm{soft}}
+		- \lambda_{\mathrm{hard}}\, P_{\mathrm{hard}}
+	}.
+\]
+Задача генетического алгоритма --- \textbf{максимизация} $F(\mathcal{T})$.
+При любом существенном нарушении жёстких ограничений
+($P_{\mathrm{hard}} \geq 1$) слагаемое
+$-\lambda_{\mathrm{hard}} P_{\mathrm{hard}}$ доминирует над мягкой частью.
 
 \subsubsection{Реализация геннетического алгоритма на языке Polars}
 WIP.
