@@ -182,48 +182,6 @@
 	\end{itemize}
 	При успешном назначении повторяется п.~6:
 	декрементируются счётчики и обновляется энтропия.
-
-	\item Распределение аудиторий для занятий.
-	Для всех аудиторий заранее вычисляется матрица кратчайших расстояний
-	$\mathrm{Dist}(a_i,a_j)$ (см. \figref{fig:matrix}).
-
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{images/ch5/matrix.png}
-		\caption{Матрица примерных расстояний между аудиториями}
-		\label{fig:matrix}
-	\end{figure}
-
-	\item Для назначенного занятия $(g,d,t,s,c,\ell)$ строится множество допустимых аудиторий:
-	\[
-	A_{\mathrm{adm}}(g,d,t,s,c)=
-	\bigl\{
-	a \in A :
-	\mathrm{cap}(a)\ge |G_{\mathrm{tar}}|,\;
-	\mathrm{equip}(a)\supseteq \mathrm{lab\_equipment}(s,c),\;
-	a \text{ свободна в слоте } (d,t)
-	\bigr\}.
-	\]
-
-	\item Выбор аудитории выполняется жадным образом с учётом уже назначенных занятий
-	в тот же день $d$ для группы $g$:
-
-	\begin{itemize}
-		\item если для дня $d$ это первое занятие группы $g$,
-		выбирается первая аудитория из $A_{\mathrm{adm}}$, отсортированного
-		в лексикографическом порядке по номеру аудитории;
-
-		\item если в этот день уже назначена хотя бы одна аудитория
-		$a_{\mathrm{prev}}$ для группы $g$, то множество $A_{\mathrm{adm}}$
-		сортируется по возрастанию расстояния
-		$\mathrm{Dist}(a_{\mathrm{prev}}, a)$, и выбирается первая
-		допустимая аудитория.
-	\end{itemize}
-
-	\item Таким образом достигается двойная цель:
-	минимизация числа используемых аудиторий за счёт устойчивого закрепления
-	аудиторий за группами и минимизация перемещений внутри корпуса
-	за счёт локальной оптимизации переходов между последовательными занятиями.
 \end{enumerate}
 
 \paragraph{Завершение WFC}
@@ -232,174 +190,229 @@
 	\item Остановка происходит, когда все счётчики
 	$n^{\mathrm{лек}}$, $n^{\mathrm{сем}}$, $n^{\mathrm{лаб}}$
 	обнуляются.
-
-	\item $\mathcal{C}_G$ и $\mathcal{C}_L$ сохраняются как итоговое расписание.
+	
+	\item $\mathcal{C}_G$ и $\mathcal{C}_L$ сохраняются как первичное
+	расписание; поле \texttt{classroom\_id} остаётся пустым
+	($\varnothing$) и заполняется на отдельном этапе после
+	генетической оптимизации (см.~ниже).
 \end{enumerate}
 
-\subsubsection{Реализация оценки расписания на языке Polars}
+\subsubsection{Реализация генетического алгоритма на языке Polars}
 
-Оценка расписания реализована в виде скалярной функции приспособленности
-$F(\mathcal{T})$, вычисляемой над таблицей студенческого расписания
-$\mathcal{T}$ с помощью библиотеки Polars.
+Вторым шагом является улучшение первичного расписания, полученного
+методом WFC, с помощью эволюционной стратегии.
+Кроссовер не используется: эволюция строится на отборе,
+мутациях, сохраняющих допустимость решения, и локальном поиске.
 
-\paragraph{Жёсткие ограничения}
-Счётчики нарушений $P_{\mathrm{hard}}^{(k)}$ суммируются в
-\[
-P_{\mathrm{hard}} = \sum_{k} P_{\mathrm{hard}}^{(k)}.
-\]
+\paragraph{Функция приспособленности}
 
-\textbf{Учебный план.}
-Фактическое число проведённых занятий:
+Приспособленность задаётся как
 \[
-	A_{g,j,\tau} = \bigl|\{(g',d,s,j',\tau',\ell) \in \mathcal{A} :
-	g'=g,\; j'=j,\; \tau'=\tau\}\bigr|.
+F(X)=W_{\mathrm{soft}}\cdot S(X)-P_{\mathrm{hard}}\cdot V_{\mathrm{hard}}(X),
 \]
+где $W_{\mathrm{soft}}=10^3$, $P_{\mathrm{hard}}=10^6$,
 \[
-P_{\mathrm{curriculum}}^{\mathrm{mismatch}} =
-\sum_{g,j,\tau} \bigl| A_{g,j,\tau} - E_{g,j,\tau} \bigr|
+S(X)=
+w_{\mathrm{win}}\,s_{\mathrm{win}}(X)+
+w_{\mathrm{load}}\,s_{\mathrm{load}}(X)+
+w_{\mathrm{start}}\,s_{\mathrm{start}}(X)+
+w_{\mathrm{pat}}\,s_{\mathrm{pat}}(X),
 \]
+все веса $w_*=1$.
 
-\[
-P_{\mathrm{curriculum}}^{\mathrm{extra}} =
-\sum_{(g,j,\tau):\,(g,j,\tau)\notin \mathrm{plan}} A_{g,j,\tau}
-\]
+\subparagraph{Жёсткие ограничения ($V_{\mathrm{hard}}$).}
+Суммарное число нарушений:
+\begin{itemize}
+	\item \textbf{учебный план} --- расхождение фактического и ожидаемого
+	числа пар по $(g,s,c)$, а также «лишние» занятия вне плана;
+	\item \textbf{календарь} --- занятия вне $D$ или в праздники $H$;
+	\item \textbf{слоты} --- $t\notin\{0,\ldots,T-1\}$;
+	\item \textbf{конфликты групп} --- более одного занятия в
+	$(g,d,t)$;
+	\item \textbf{конфликты преподавателей} --- более одного \emph{различного}
+	занятия в $(\ell,d,t)$; допускается совместное ведение одной лекции
+	в потоке (одинаковые $s$ и $c$);
+	\item \textbf{назначение преподавателя} --- пара $(\ell,s)\notin\mathrm{subject_lecturers}$
+	или $\ell=\varnothing$.
+\end{itemize}
+Решение \textbf{допустимо}, если $V_{\mathrm{hard}}(X)=0$.
 
-\textbf{Календарь.}
-Пусть $\mathcal{W}$ --- множество дат в семестре,
-$\mathcal{H}$ --- праздничные дни:
-\[
-P_{\mathrm{calendar}} =
-\bigl|\{(g,d,s,\ldots)\in\mathcal{A} : d \notin \mathcal{W}\}\bigr|
-+ \bigl|\{(g,d,s,\ldots)\in\mathcal{A} : d \in \mathcal{H}\}\bigr|.
-\]
+\subparagraph{Мягкие критерии ($S$).}
+Каждый критерий нормируется в $(0,1]$ по формуле $1/(1+\text{метрика})$:
+\begin{enumerate}
+	\item \textbf{Окна} ($s_{\mathrm{win}}$).
+	Для каждой пары $(g,d)$ считается число «пустых» слотов между
+	первой и последней парой дня:
+	\[
+	W_{\mathrm{tot}}=
+	\sum_{g,d}\Bigl(
+	\max_{t\in X(g,d)} t-\min_{t\in X(g,d)} t+1-|X(g,d)|
+	\Bigr).
+	\]
+	
+	\item \textbf{Равномерность нагрузки по дням недели} ($s_{\mathrm{load}}$).
+	Для группы $g$ вычисляется коэффициент вариации числа пар
+	по дням недели; затем усредняется по группам.
+	
+	\item \textbf{Стабильность времени начала} ($s_{\mathrm{start}}$).
+	Для каждой тройки $(g,s,c)$ берётся стандартное отклонение слота $t$
+	по всем неделям; затем усредняется.
+	
+	\item \textbf{Недельный паттерн} ($s_{\mathrm{pat}}$).
+	Для $(g,s,c,\mathrm{weekday}(d))$ штрафуется использование
+	более одного различного слота:
+	\[
+	P_{\mathrm{pat}}=
+	\sum \max\bigl(|\{t\}|-1,\,0\bigr).
+	\]
+\end{enumerate}
 
-\textbf{Временные слоты:}
-\[
-P_{\mathrm{slot}} =
-\bigl|\{(g,d,s,\ldots)\in\mathcal{A} : s < 0 \;\vee\; s \geq 8\}\bigr|.
-\]
+\paragraph{Операторы мутации}
 
-\textbf{Конфликт группы} (две дисциплины в одной ячейке):
-\[
-P_{\mathrm{group}} =
-\sum_{\substack{(g,d,s)\\ \text{дубль}}}
-\bigl(\mathrm{count}(g,d,s) - 1\bigr).
-\]
+Все операторы перемещают одно занятие из ячейки $(g,d,t)$ в
+$(g,d',t')$ при выполнении предиката $\mathrm{can\_place}$:
+\begin{itemize}
+	\item $d'\in D\setminus H$;
+	\item целевая ячейка группы свободна;
+	\item преподаватель $\ell$ свободен в $(d',t')$ либо ведёт то же
+	$(s,c)$ (потоковая лекция);
+	\item $(\ell,s)\in\mathrm{subject_lecturers}$.
+\end{itemize}
 
-\textbf{Конфликт преподавателя.}
-Потоковая лекция (один преподаватель, одна дисциплина и тип, несколько
-групп в одном слоте) \emph{не} считается нарушением. Конфликт ---
-разные пары $(j,\tau)$ у одного $(\ell,d,s)$:
-\[
-P_{\mathrm{lecturer}}^{\mathrm{dup}} =
-\sum_{\substack{(\ell,d,s)\\ n_{\mathrm{sess}}>1}}
-\bigl(n_{\mathrm{sess}}(\ell,d,s) - 1\bigr),
-\]
-где $n_{\mathrm{sess}}(\ell,d,s)$ --- число уникальных пар
-$(j,\tau)$ в данном слоте.
-Дополнительно:
-\[
-\begin{aligned}
-	P_{\mathrm{lecturer}}^{\mathrm{invalid}} &=
-	\bigl|\text{занятия, где } (\ell,j) \notin \text{SubjectLecturers}\bigr|
-\end{aligned}
-\]
+Вариации алгоритма SA:
+\begin{enumerate}
+	\item \texttt{holiday\_repair} --- перенос занятия с праздничной даты
+	на случайный рабочий день и слот.
+	
+	\item \texttt{relocate\_session} --- случайный перенос произвольного
+	назначенного занятия.
+	
+	\item \texttt{compress\_day} --- выбор дня $(g,d)$ с окнами
+	($\max t-\min t+1-|\{t\}|>0$), выбор пустого слота внутри
+	дневного интервала и сдвиг крайнего занятия в этот слот.
+	
+	\item \texttt{align\_pattern\_slot} --- для «размазанного» паттерна
+	$(g,s,c,\mathrm{weekday})$ выбирается целевой слот (медиана по
+	текущим слотам) и одно занятие переносится на него в одном из
+	соответствующих рабочих дней.
+\end{enumerate}
 
-\[
-\begin{aligned}
-	P_{\mathrm{lecturer}}^{\mathrm{null}} &=
-	\bigl|\text{занятия с } \ell = \texttt{null}\bigr|
-\end{aligned}
-\]
+Случайный оператор выбирается равновероятно; при наличии
+праздничных занятий с вероятностью $0{,}5$ приоритетно вызывается
+\texttt{holiday\_repair}. Каждая попытка --- до $40$ случайных
+кандидатов $(d',t')$.
 
-Итого:
-\[
-P_{\mathrm{hard}} =
-P_{\mathrm{curriculum}}^{\mathrm{mismatch}}
-+ P_{\mathrm{curriculum}}^{\mathrm{extra}}
-+ P_{\mathrm{calendar}}
-+ P_{\mathrm{slot}}
-+ P_{\mathrm{group}}
-+ P_{\mathrm{lecturer}}^{\mathrm{dup}}
-+ P_{\mathrm{lecturer}}^{\mathrm{invalid}}
-+ P_{\mathrm{lecturer}}^{\mathrm{null}}.
-\]
+\paragraph{Инициализация популяции}
 
-Решение \emph{допустимо} ($\mathrm{feasible}=\mathrm{true}$), если
-$P_{\mathrm{hard}}=0$.
+Размер популяции $N_{\mathrm{pop}}$.
+\begin{enumerate}
+	\item Элита: seed-расписание WFC без изменений.
+	\item Остальные $N_{\mathrm{pop}}-1$ особи: копии seed с
+	$120$ случайными мутациями (с приоритетом \texttt{holiday\_repair}).
+	\item Каждая особь оценивается функцией $F$; популяция сортируется
+	по убыванию приспособленности.
+\end{enumerate}
 
-\paragraph{Мягкие критерии}
-Каждый критерий нормируется в интервал $(0,1]$ по схеме
-$q = 1/(1 + p)$, где $p$ --- штраф (чем меньше $p$, тем выше $q$).
+\paragraph{Итерация эволюции}
 
-\textbf{Непрерывность (окна).}
-Для группы $g$ и дня $d$ пусть $S_{g,d} = \{s_1,\ldots,s_k\}$ ---
-упорядоченное множество занятых слотов, $k \geq 2$:
-\[
-	\omega_{g,d} = (\max S_{g,d} - \min S_{g,d} + 1) - k.
-\]
-\[
-	W = \sum_{g,d} \omega_{g,d}, \qquad
-	q_{\mathrm{win}} = \frac{1}{1 + W}.
-\]
+Повторять до $G_{\max}$ поколений или до плато без улучшения лучшего решения.
 
-\textbf{Равномерность загруженности.}
-Для группы $g$ по дням недели $w$:
-$n_{g,w}$ --- число пар в семестре. Коэффициент вариации:
-\[
-	\mathrm{CV}_g =
-	\frac{\sigma(\{n_{g,w}\}_w)}{\mu(\{n_{g,w}\}_w) + \varepsilon},
-	\qquad \varepsilon = 10^{-9}.
-\]
-\[
-	\overline{\mathrm{CV}} = \frac{1}{|G|}\sum_{g\in G} \mathrm{CV}_g, \qquad
-	q_{\mathrm{load}} = \frac{1}{1 + \overline{\mathrm{CV}}}.
-\]
+\begin{enumerate}
+	\item \textbf{Элитизм}: лучшие особи переносятся в следующее поколение без изменений.
+	
+	\item \textbf{Отбор родителя}: турнирный отбор ($k=3$) ---
+	из $k$ случайных особей выбирается лучшая по $F$.
+	
+	\item \textbf{Потомок}: клон родителя; к нему применяется
+	$2$ случайные мутации.
+	
+	\item \textbf{Локальный поиск} (hill climbing): до $30$ попыток
+	случайной мутации; принимается только улучшение или сохранение $F$.
+	Это ускоряет сходимость без нарушения допустимости.
+	
+	\item \textbf{Формирование нового поколения}: все потомки оцениваются,
+	популяция снова сортируется по $F$.
+	
+	\item \textbf{Глобальный лучший}: если $F$ лучшей особи поколения
+	превышает текущий рекорд, обновляется $\texttt{best}$; иначе
+	счётчик плато увеличивается на~1.
+\end{enumerate}
 
-\textbf{Равномерность начала занятий.}
-Для каждой пары $(g,j,\tau)$ по всем вхождениям вычисляется
-$\sigma_{g,j,\tau} = \mathrm{std}(\{s\})$; затем
-\[
-	\overline{\sigma} = \frac{1}{N_{\mathrm{pairs}}}\sum_{g,j,\tau} \sigma_{g,j,\tau},
-	\qquad
-	q_{\mathrm{start}} = \frac{1}{1 + \overline{\sigma}}.
-\]
+\paragraph{Завершение генетического алгоритма}
 
-\textbf{Равномерность идентичности по дням недели.}
-Для $(g,j,\tau,w)$ пусть $U_{g,j,\tau,w}$ --- число различных слотов
-на всех датах $d$ с $\mathrm{weekday}(d)=w$:
-\[
-	\pi_{g,j,\tau,w} = \max(0,\; U_{g,j,\tau,w} - 1), \qquad
-	\Pi = \sum_{g,j,\tau,w} \pi_{g,j,\tau,w}, \qquad
-	q_{\mathrm{pat}} = \frac{1}{1 + \Pi}.
-\]
+\begin{enumerate}
+	\item Остановка по достижению плато или лимита поколений.
+	
+	\item Сохранение лучшего расписания (см. \figref{fig:evolution}).
+\end{enumerate}
 
-\paragraph{Итоговая функция приспособленности.}
-Веса мягких компонент $w_{\mathrm{win}}=w_{\mathrm{load}}=
-w_{\mathrm{start}}=w_{\mathrm{pat}}=1$,
-$\lambda_{\mathrm{soft}} = 1000$,
-$\lambda_{\mathrm{hard}} = 10^{6}$:
-\[
-	Q_{\mathrm{soft}} =
-	w_{\mathrm{win}}\, q_{\mathrm{win}}
-	+ w_{\mathrm{load}}\, q_{\mathrm{load}}
-	+ w_{\mathrm{start}}\, q_{\mathrm{start}}
-	+ w_{\mathrm{pat}}\, q_{\mathrm{pat}},
-\]
-\[
-	\boxed{
-		F(\mathcal{T}) =
-		\lambda_{\mathrm{soft}}\, Q_{\mathrm{soft}}
-		- \lambda_{\mathrm{hard}}\, P_{\mathrm{hard}}
-	}.
-\]
-Задача генетического алгоритма --- \textbf{максимизация} $F(\mathcal{T})$.
-При любом существенном нарушении жёстких ограничений
-($P_{\mathrm{hard}} \geq 1$) слагаемое
-$-\lambda_{\mathrm{hard}} P_{\mathrm{hard}}$ доминирует над мягкой частью.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{images/ch5/evolution.png}
+	\caption{Результат генетического алгоритма после 1000 поколений}
+	\label{fig:evolution}
+\end{figure}
 
-\subsubsection{Реализация геннетического алгоритма на языке Polars}
-WIP.
+\subsubsection{Назначение аудиторий}
+
+Третьим шагом к уже оптимизированному расписанию групп
+(после WFC и генетического алгоритма) последовательно
+назначаются аудитории. Этот этап не участвует в эволюции:
+временная структура расписания фиксирована, меняется только
+поле \texttt{classroom\_id}.
+
+\paragraph{Подготовка}
+
+\begin{enumerate}
+	\item Загрузка множества аудиторий $A$ с атрибутами
+	$\mathrm{cap}(a)$ (вместимость) и $\mathrm{equip}(a)$ (оборудование).
+	
+	\item Предварительное вычисление матрицы кратчайших расстояний
+	$\mathrm{Dist}(a_i,a_j)$ между аудиториями
+	(см.~\figref{fig:matrix}).
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{images/ch5/matrix.png}
+		\caption{Матрица примерных расстояний между аудиториями}
+		\label{fig:matrix}
+	\end{figure}
+\end{enumerate}
+
+\paragraph{Назначение по занятиям}
+
+Для каждого назначенного занятия $(g,d,t,s,c,\ell)$ в порядке
+обхода расписания строится множество допустимых аудиторий:
+\[
+A_{\mathrm{adm}}(g,d,t,s,c)=
+\bigl\{
+a \in A :
+\mathrm{cap}(a)\ge |G_{\mathrm{tar}}|,\;
+\mathrm{equip}(a)\supseteq \mathrm{lab\_equipment}(s,c),\;
+a \text{ свободна в слоте } (d,t)
+\bigr\},
+\]
+где $G_{\mathrm{tar}}$ --- целевые группы занятия
+(одна группа для семинара/лабораторной, поток --- для лекции).
+
+Выбор аудитории выполняется жадным образом с учётом уже
+назначенных занятий группы $g$ в тот же день $d$:
+
+\begin{itemize}
+	\item если для дня $d$ это первое занятие группы $g$,
+	выбирается первая аудитория из $A_{\mathrm{adm}}$, отсортированного
+	в лексикографическом порядке по номеру аудитории;
+	
+	\item если в этот день уже назначена аудитория $a_{\mathrm{prev}}$,
+	множество $A_{\mathrm{adm}}$ сортируется по возрастанию
+	$\mathrm{Dist}(a_{\mathrm{prev}}, a)$, и выбирается первая
+	допустимая аудитория.
+\end{itemize}
+
+Так достигается двойная цель: минимизация числа используемых
+аудиторий за счёт закрепления кабинетов за группами и
+минимизация перемещений внутри корпуса за счёт локальной
+оптимизации переходов между последовательными парами.
 
 \subsection{Клиент}
 
