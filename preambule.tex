@@ -85,10 +85,14 @@
 %===================================================
 
 \usepackage{amsmath}
-\usepackage{amsfonts} 
+\usepackage{amsfonts}
 
-
-
+% Нумерация формул в пределах раздела: (2.1) справа (требования к оформлению ВКР 2026)
+\numberwithin{equation}{section}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+\makeatletter
+\def\tagform@#1{\maketag@@@{(\ignorespaces#1\unskip)\hfil}}
+\makeatother
 
 
 

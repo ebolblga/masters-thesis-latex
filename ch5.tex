@@ -207,17 +207,19 @@
 \paragraph{Функция приспособленности}
 
 Приспособленность задаётся как
-\[
-F(X)=W_{\mathrm{soft}}\cdot S(X)-P_{\mathrm{hard}}\cdot V_{\mathrm{hard}}(X),
-\]
+\begin{equation}
+	F(X)=W_{\mathrm{soft}}\cdot S(X)-P_{\mathrm{hard}}\cdot V_{\mathrm{hard}}(X),
+	\label{eq:fitness}
+\end{equation}
 где $W_{\mathrm{soft}}=10^3$, $P_{\mathrm{hard}}=10^6$,
-\[
-S(X)=
-w_{\mathrm{win}}\,s_{\mathrm{win}}(X)+
-w_{\mathrm{load}}\,s_{\mathrm{load}}(X)+
-w_{\mathrm{start}}\,s_{\mathrm{start}}(X)+
-w_{\mathrm{pat}}\,s_{\mathrm{pat}}(X),
-\]
+\begin{equation}
+	S(X)=
+	w_{\mathrm{win}}\,s_{\mathrm{win}}(X)+
+	w_{\mathrm{load}}\,s_{\mathrm{load}}(X)+
+	w_{\mathrm{start}}\,s_{\mathrm{start}}(X)+
+	w_{\mathrm{pat}}\,s_{\mathrm{pat}}(X),
+	\label{eq:fitness-soft}
+\end{equation}
 все веса $w_*=1$.
 
 \subparagraph{Жёсткие ограничения ($V_{\mathrm{hard}}$).}
@@ -383,15 +385,16 @@ $(g,d',t')$ при выполнении предиката $\mathrm{can\_place}$
 
 Для каждого назначенного занятия $(g,d,t,s,c,\ell)$ в порядке
 обхода расписания строится множество допустимых аудиторий:
-\[
-A_{\mathrm{adm}}(g,d,t,s,c)=
-\bigl\{
-a \in A :
-\mathrm{cap}(a)\ge |G_{\mathrm{tar}}|,\;
-\mathrm{equip}(a)\supseteq \mathrm{lab\_equipment}(s,c),\;
-a \text{ свободна в слоте } (d,t)
-\bigr\},
-\]
+\begin{equation}
+	A_{\mathrm{adm}}(g,d,t,s,c)=
+	\bigl\{
+	a \in A :
+	\mathrm{cap}(a)\ge |G_{\mathrm{tar}}|,\;
+	\mathrm{equip}(a)\supseteq \mathrm{lab\_equipment}(s,c),\;
+	a \text{ свободна в слоте } (d,t)
+	\bigr\},
+	\label{eq:admissible-classrooms}
+\end{equation}
 где $G_{\mathrm{tar}}$ --- целевые группы занятия
 (одна группа для семинара/лабораторной, поток --- для лекции).
 
