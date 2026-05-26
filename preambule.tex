@@ -67,15 +67,18 @@
 \usepackage{array}
 
 
-% Шрифт в таблицах
+% Шрифт в таблицах (требования к оформлению ВКР 2026: 12 пт, одинарный интервал)
+\AtBeginEnvironment{table}{%
+	\def\insidetable{true}%
+	\renewcommand{\arraystretch}{1.0}%
+}
+\AtEndEnvironment{table}{\renewcommand{\arraystretch}{1.5}}
 
-\AtBeginEnvironment{table}{\def\insidetable{true}}
+\AtBeginEnvironment{tabular}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{12pt}{12pt}\selectfont\fi}
+\AtBeginEnvironment{longtable}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{12pt}{12pt}\selectfont\fi}
+\AtBeginEnvironment{tabularx}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{12pt}{12pt}\selectfont\fi}
 
-\AtBeginEnvironment{tabular}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{14pt}{14pt}\selectfont\fi}
-\AtBeginEnvironment{longtable}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{14pt}{14pt}\selectfont\fi}
-\AtBeginEnvironment{tabularx}{\ifdefined\insidetable\ifDebug\color{red}\fi\fontsize{14pt}{14pt}\selectfont\fi}
-
-\renewcommand{\arraystretch}{1.5} %расстояние между стрчоками в таблицах
+\renewcommand{\arraystretch}{1.5} % межстрочный интервал вне таблиц float
 
 %===================================================
 % Математические формулы
@@ -205,6 +208,7 @@
 
 %Подпись рис. центр
 \captionsetup[figure]{
+	name=Рис.,
 	justification=centering,
 	labelsep=dot, 
 	format=plain,
@@ -216,6 +220,7 @@
 
 %Подпись табл. справа
 \captionsetup[table]{
+	name=Таблица,
 	justification=raggedleft,
 	labelsep=dot_tbl, 
 	format=plain, 
@@ -255,8 +260,9 @@
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
 
-% Ссылка на рисунок в тексте (ГОСТ 7.32)
-\newcommand{\figref}[1]{рис.~\ref{#1}}
+% Ссылки на рисунок и таблицу в тексте (требования к оформлению ВКР 2026)
+\newcommand{\figref}[1]{Рис.~\ref{#1}}
+\newcommand{\tabref}[1]{Таблица~\ref{#1}}
 
 
 %===================================================
