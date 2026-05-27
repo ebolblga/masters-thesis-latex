@@ -122,8 +122,11 @@
 %===================================================
 
 \setcounter{secnumdepth}{4} %Глубина вложенности заголовокв в документе
+\setcounter{tocdepth}{3} % в оглавлении: section, subsection, subsubsection (без paragraph/subparagraph)
 
 \usepackage{titlesec} % Для настройки заголовков
+\titleclass{\paragraph}{straight}
+\titleclass{\subparagraph}{straight}
 \titleformat{\section}[block]
 {\centering\bfseries} % Полужирный, по центру, прописные
 {ГЛАВА \thesection.\ } % Нумерация с точкой
@@ -324,9 +327,9 @@
 
 \renewcommand{\cftdotsep}{2}
 
-\renewcommand{\cftsecpresnum}{Глава }
-\setlength{\cftsecnumwidth}{\widthof{Глава 0.\ }}  %widthof см выше пакет calc
-\renewcommand{\cftsecaftersnum}{. } 
+\renewcommand{\cftsecpresnum}{ГЛАВА }
+\setlength{\cftsecnumwidth}{\widthof{ГЛАВА 10.\ }}
+\renewcommand{\cftsecaftersnum}{. }
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecfont}{\normalfont}        % обычный шрифт
 \renewcommand{\cftsecpagefont}{\normalfont}    % шрифт номеров страниц
