@@ -60,20 +60,30 @@
 	\item Задание числа пар в день $T=8$ и нумерация слотов
 	$t \in \{0,\ldots,T-1\}$.
 
-	\item Формирование \textbf{суперпозиции} --- декартова произведения:
-	\[
-	\mathcal{C}_G = G \times D \times \{0,\ldots,T-1\}, \qquad
-	\mathcal{C}_L = L \times D \times \{0,\ldots,T-1\}.
-	\]
+	\item Формирование \textbf{суперпозиции} --- декартова произведения \formref{eq:wfc-superposition}:
+	\begin{equation}
+		\mathcal{C}_G = G \times D \times \{0,\ldots,T-1\}, \qquad
+		\mathcal{C}_L = L \times D \times \{0,\ldots,T-1\}.
+		\label{eq:wfc-superposition}
+	\end{equation}
+	\formwhere{где $\mathcal{C}_G$, $\mathcal{C}_L$~--- множества ячеек суперпозиции для групп и преподавателей;
+		\formwherenext{$G$, $L$}{множества групп и преподавателей};
+		\formwherenext{$D$}{множество рабочих дней семестра};
+		\formwherenext{$T$}{число пар в день}.}
 	Каждая ячейка $(g,d,t)$ или $(\ell,d,t)$ изначально свободна
 	($subject\_id=\varnothing$).
 
-	\item Вычисление \textbf{веса ячейки} $w(g,d,t)$:
-	\[
-	w(g,d,t)=\log\!\bigl(1+w_{\mathrm{day}}(\mathrm{weekday}(d))\bigr)\cdot
-	w_{\mathrm{slot}}(t),
-	\]
-	с обнулением в праздники; для занятых ячеек $w(g,d,t)=0$. Именно на этом шаге учитываются предпочтения преподавателей по нагрузке по дням недели, а для студентов двигается распределение --- дневная или вечерняя форма обучения (см. \figref{fig:weight}).
+	\item Вычисление \textbf{веса ячейки} $w(g,d,t)$ по \formref{eq:wfc-weight}:
+	\begin{equation}
+		w(g,d,t)=\log\!\bigl(1+w_{\mathrm{day}}(\mathrm{weekday}(d))\bigr)\cdot
+		w_{\mathrm{slot}}(t),
+		\label{eq:wfc-weight}
+	\end{equation}
+	\formwhere{где $w(g,d,t)$~--- вес ячейки группы;
+		\formwherenext{$w_{\mathrm{day}}$}{вес дня недели};
+		\formwherenext{$w_{\mathrm{slot}}$}{вес временного слота};
+		\formwherenext{$\mathrm{weekday}(d)$}{день недели для даты $d$}.}
+	С обнулением в праздники; для занятых ячеек $w(g,d,t)=0$. Именно на этом шаге учитываются предпочтения преподавателей по нагрузке по дням недели, а для студентов двигается распределение --- дневная или вечерняя форма обучения (см. \figref{fig:weight}).
 
 	\begin{figure}[H]
 		\centering
@@ -83,11 +93,15 @@
 	\end{figure}
 
 	\item Вычисление \textbf{энтропии} группы $H(g)$ --- суммарного числа оставшихся
-	занятий по всем дисциплинам группы (см. \figref{fig:entropy}):
-	\[
-	H(g)=\sum_{s\in S(g)}
-	\bigl(n^{\mathrm{лек}}_{g,s}+n^{\mathrm{сем}}_{g,s}+n^{\mathrm{лаб}}_{g,s}\bigr).
-	\]
+	занятий по всем дисциплинам группы (см. \figref{fig:entropy}) --- по \formref{eq:wfc-entropy}:
+	\begin{equation}
+		H(g)=\sum_{s\in S(g)}
+		\bigl(n^{\mathrm{лек}}_{g,s}+n^{\mathrm{сем}}_{g,s}+n^{\mathrm{лаб}}_{g,s}\bigr).
+		\label{eq:wfc-entropy}
+	\end{equation}
+	\formwhere{где $H(g)$~--- энтропия группы $g$;
+		\formwherenext{$S(g)$}{множество дисциплин группы};
+		\formwherenext{$n^{\mathrm{лек}}_{g,s}$, $n^{\mathrm{сем}}_{g,s}$, $n^{\mathrm{лаб}}_{g,s}$}{оставшиеся часы лекций, семинаров и лабораторных по паре $(g,s)$}.}
 
 	\begin{figure}[H]
 		\centering
@@ -101,72 +115,91 @@
 
 \paragraph{Итерация WFC (один шаг apply\_one\_step)}
 
-Повторять, пока
-\[
-\sum_{g\in G}\sum_{s\in S(g)}
-\bigl(n^{\mathrm{лек}}_{g,s}+n^{\mathrm{сем}}_{g,s}+n^{\mathrm{лаб}}_{g,s}\bigr)>0.
-\]
+Повторять, пока выполняется условие \formref{eq:wfc-stop}:
+\begin{equation}
+	\sum_{g\in G}\sum_{s\in S(g)}
+	\bigl(n^{\mathrm{лек}}_{g,s}+n^{\mathrm{сем}}_{g,s}+n^{\mathrm{лаб}}_{g,s}\bigr)>0.
+	\label{eq:wfc-stop}
+\end{equation}
+\formwhere{где левая часть неравенства~--- суммарное число нераспределённых занятий по всем группам и дисциплинам.}
 
 \begin{enumerate}
 	\item Выбор ячейки для коллапса.
 	Среди свободных ячеек из $\mathcal{C}_G$ с $H(g)>0$ выбирается множество
-	с минимальной энтропией:
-	\[
-	\mathcal{M}=\arg\min_{(g,d,t)\in\mathcal{C}_G,\;H(g)>0} H(g).
-	\]
+	с минимальной энтропией \formref{eq:wfc-min-entropy}:
+	\begin{equation}
+		\mathcal{M}=\arg\min_{(g,d,t)\in\mathcal{C}_G,\;H(g)>0} H(g).
+		\label{eq:wfc-min-entropy}
+	\end{equation}
+	\formwhere{где $\mathcal{M}$~--- множество ячеек с минимальной энтропией $H(g)$.}
 	Затем случайно выбирается $(g^{*}, d^{*}, t^{*}) \in \mathcal{M}$
 	с вероятностями, пропорциональными $\exp(w-\max w)$
 	(softmax по весу).
 
 	\item Сужение по преподавателям.
-	\[
-	L^{*}=\{\ell \in L : \exists s \in S(g^{*}),\; (\ell,s)\in\mathrm{subject\_lecturers}\},
-	\]
-	после чего из этого множества исключаются преподаватели, уже занятые
-	в слоте $(d^{*}, t^{*})$:
-	\[
-	L^{*}\leftarrow \{\ell \in L^{*} : \text{ячейка }(\ell,d^{*},t^{*})\text{ свободна}\}.
-	\]
+	Сначала формируется множество \formref{eq:wfc-lecturers}:
+	\begin{equation}
+		L^{*}=\{\ell \in L : \exists s \in S(g^{*}),\; (\ell,s)\in\mathrm{subject\_lecturers}\},
+		\label{eq:wfc-lecturers}
+	\end{equation}
+	\formwhere{где $L^{*}$~--- множество допустимых преподавателей;
+		\formwherenext{$g^{*}$}{выбранная группа};
+		\formwherenext{$\mathrm{subject\_lecturers}$}{соответствие «преподаватель--дисциплина»}.}
+	После чего из этого множества исключаются преподаватели, уже занятые
+	в слоте $(d^{*}, t^{*})$, согласно \formref{eq:wfc-lecturers-free}:
+	\begin{equation}
+		L^{*}\leftarrow \{\ell \in L^{*} : \text{ячейка }(\ell,d^{*},t^{*})\text{ свободна}\}.
+		\label{eq:wfc-lecturers-free}
+	\end{equation}
+	\formwhere{где $d^{*}$, $t^{*}$~--- выбранные дата и временной слот;
+		\formwherenext{$\leftarrow$}{операция сужения множества $L^{*}$}.}
 
 	\item Коллапс дисциплины и типа занятия.
 	Для каждой пары $(s,c)$, где $c\in\{\mathrm{лек},\mathrm{сем},\mathrm{лаб}\}$,
 	для которой $n^c_{g^{*},s}>0$ и существует $\ell\in L^{*}$ такой, что
 	$(\ell,s)\in\mathrm{subject\_lecturers}$, выбирается одна тройка
 	$(s^{*},c^{*},\ell^{*})$ взвешенным случайным выбором.
-	Вес кандидата задаётся как
-	\[
-	p(\ell)\propto \frac{1}{H(\ell)+\varepsilon},
-	\qquad \varepsilon=10^{-6}.
-	\]
+	Вес кандидата задаётся \formref{eq:wfc-candidate-prob}:
+	\begin{equation}
+		p(\ell)\propto \frac{1}{H(\ell)+\varepsilon},
+		\qquad \varepsilon=10^{-6}.
+		\label{eq:wfc-candidate-prob}
+	\end{equation}
+	\formwhere{где $p(\ell)$~--- вес выбора преподавателя $\ell$;
+		\formwherenext{$H(\ell)$}{энтропия преподавателя};
+		\formwherenext{$\varepsilon$}{малый положительный параметр, $\varepsilon=10^{-6}$}.}
 
-	\item Определение целевых групп.
-\[
-G_{\mathrm{tar}}=
-\begin{cases}
-	\{g^{*}\},
-	& c^{*}\in\{\mathrm{сем},\mathrm{лаб}\},\\[6pt]
-
-	\left\{
-	g\in G :
-	\parbox[t]{0.45\linewidth}{
-		группа $g$ относится
-		к тому же потоку,
-		что и $g^{*}$
-	}
-	\right\},
-	& c^{*}=\mathrm{лек},
-\end{cases}
-\]
-	где «поток» --- это группа групп с общим префиксом имени
-	(например, "ИДМ-24-" для "ИДМ-24-08"),
-	пересечённая с $S(g)$ для выбранной дисциплины $s^{*}$.
+	\item Определение целевых групп \formref{eq:wfc-target-groups}:
+	\begin{equation}
+		G_{\mathrm{tar}}=
+		\begin{cases}
+			\{g^{*}\},
+			& c^{*}\in\{\mathrm{сем},\mathrm{лаб}\},\\[6pt]
+			\left\{
+			g\in G :
+			\parbox[t]{0.45\linewidth}{
+				группа $g$ относится
+				к тому же потоку,
+				что и $g^{*}$
+			}
+			\right\},
+			& c^{*}=\mathrm{лек},
+		\end{cases}
+		\label{eq:wfc-target-groups}
+	\end{equation}
+	\formwhere{где $G_{\mathrm{tar}}$~--- целевые группы занятия;
+		\formwherenext{$g^{*}$, $c^{*}$}{выбранные группа и тип занятия};
+		\formwherenext{«поток»}{группа групп с общим префиксом имени (например, «ИДМ-24-» для «ИДМ-24-08»), пересечённая с $S(g)$ для дисциплины $s^{*}$}.}
 
 	\item Назначение (коллапс).
-	Для всех $g\in G_{\mathrm{tar}}$ в ячейку $(g,d^{*},t^{*})$ записывается:
-	\[
-	(s^{*}, c^{*}, \ell^{*}), \qquad
-	subject\_type\in\{0,1,2\}\Leftrightarrow\{\mathrm{лек},\mathrm{сем},\mathrm{лаб}\}.
-	\]
+	Для всех $g\in G_{\mathrm{tar}}$ в ячейку $(g,d^{*},t^{*})$ записывается \formref{eq:wfc-assign}:
+	\begin{equation}
+		(s^{*}, c^{*}, \ell^{*}), \qquad
+		subject\_type\in\{0,1,2\}\Leftrightarrow\{\mathrm{лек},\mathrm{сем},\mathrm{лаб}\}.
+		\label{eq:wfc-assign}
+	\end{equation}
+	\formwhere{где $s^{*}$, $c^{*}$, $\ell^{*}$~--- выбранные дисциплина, тип занятия и преподаватель;
+		\formwherenext{$subject\_type$}{код типа занятия в ячейке расписания}.}
 	После этого заносится занятость в ячейку преподавателя $(\ell^{*},d^{*},t^{*})$.
 
 	\item Локальное распространение ограничений.
@@ -177,10 +210,12 @@ G_{\mathrm{tar}}=
 	\end{itemize}
 
 	\item Недельное распространение (flood fill).
-	Пока
-	\[
-	\min_{g\in G_{\mathrm{tar}}} n^{c^{*}}_{g,s^{*}}>0,
-	\]
+	Пока выполняется условие \formref{eq:wfc-flood-condition}:
+	\begin{equation}
+		\min_{g\in G_{\mathrm{tar}}} n^{c^{*}}_{g,s^{*}}>0,
+		\label{eq:wfc-flood-condition}
+	\end{equation}
+	\formwhere{где $n^{c^{*}}_{g,s^{*}}$~--- оставшееся число занятий типа $c^{*}$ по дисциплине $s^{*}$ для группы $g$.}
 	для $k=1,2,\ldots,52$ и $\sigma\in\{+1,-1\}$ выполняется попытка
 	поставить то же занятие в $(g,d^{*}+\sigma k\text{ нед.},t^{*})$
 	для всех $g\in G_{\mathrm{tar}}$, если:
@@ -215,12 +250,18 @@ G_{\mathrm{tar}}=
 
 \paragraph{Функция приспособленности}
 
-Приспособленность задаётся как
+Приспособленность задаётся \formref{eq:fitness}:
 \begin{equation}
 	F(X)=W_{\mathrm{soft}}\cdot S(X)-P_{\mathrm{hard}}\cdot V_{\mathrm{hard}}(X),
 	\label{eq:fitness}
 \end{equation}
-где $W_{\mathrm{soft}}=10^3$, $P_{\mathrm{hard}}=10^6$,
+\formwhere{где $F(X)$~--- значение функции приспособленности для расписания $X$;
+	\formwherenext{$W_{\mathrm{soft}}$}{вес мягких критериев, $W_{\mathrm{soft}}=10^3$};
+	\formwherenext{$P_{\mathrm{hard}}$}{штраф за нарушение жёстких ограничений, $P_{\mathrm{hard}}=10^6$};
+	\formwherenext{$S(X)$}{суммарная оценка мягких критериев};
+	\formwherenext{$V_{\mathrm{hard}}(X)$}{число нарушений жёстких ограничений}.}
+
+Составляющая $S(X)$ вычисляется по \formref{eq:fitness-soft}:
 \begin{equation}
 	S(X)=
 	w_{\mathrm{win}}\,s_{\mathrm{win}}(X)+
@@ -229,7 +270,11 @@ G_{\mathrm{tar}}=
 	w_{\mathrm{pat}}\,s_{\mathrm{pat}}(X),
 	\label{eq:fitness-soft}
 \end{equation}
-все веса $w_*=1$.
+\formwhere{где $w_{\mathrm{win}}$, $w_{\mathrm{load}}$, $w_{\mathrm{start}}$, $w_{\mathrm{pat}}$~--- веса мягких критериев, все равны $1$;
+	\formwherenext{$s_{\mathrm{win}}(X)$}{нормированная оценка критерия «окна»};
+	\formwherenext{$s_{\mathrm{load}}(X)$}{нормированная оценка равномерности нагрузки по дням недели};
+	\formwherenext{$s_{\mathrm{start}}(X)$}{нормированная оценка стабильности времени начала занятий};
+	\formwherenext{$s_{\mathrm{pat}}(X)$}{нормированная оценка недельного паттерна}.}
 
 \subparagraph{Жёсткие ограничения ($V_{\mathrm{hard}}$).}
 Суммарное число нарушений:
@@ -249,17 +294,26 @@ G_{\mathrm{tar}}=
 Решение допустимо, если $V_{\mathrm{hard}}(X)=0$.
 
 \subparagraph{Мягкие критерии ($S$).}
-Каждый критерий нормируется в $(0,1]$ по формуле $1/(1+\text{метрика})$:
+Каждый критерий нормируется в $(0,1]$ по \formref{eq:norm-soft}:
+\begin{equation}
+	s = \frac{1}{1+\text{метрика}},
+	\label{eq:norm-soft}
+\end{equation}
+\formwhere{где $s$~--- нормированная оценка критерия;
+	\formwherenext{метрика}{исходное значение соответствующего критерия качества}.}
 \begin{enumerate}
 	\item \textbf{Окна} ($s_{\mathrm{win}}$).
 	Для каждой пары $(g,d)$ считается число «пустых» слотов между
-	первой и последней парой дня:
-	\[
-	W_{\mathrm{tot}}=
-	\sum_{g,d}\Bigl(
-	\max_{t\in X(g,d)} t-\min_{t\in X(g,d)} t+1-|X(g,d)|
-	\Bigr).
-	\]
+	первой и последней парой дня по \formref{eq:wfc-windows}:
+	\begin{equation}
+		W_{\mathrm{tot}}=
+		\sum_{g,d}\Bigl(
+		\max_{t\in X(g,d)} t-\min_{t\in X(g,d)} t+1-|X(g,d)|
+		\Bigr).
+		\label{eq:wfc-windows}
+	\end{equation}
+	\formwhere{где $W_{\mathrm{tot}}$~--- суммарное число «окон» в расписании;
+		\formwherenext{$X(g,d)$}{множество занятых слотов группы $g$ в день $d$}.}
 
 	\item \textbf{Равномерность нагрузки по дням недели} ($s_{\mathrm{load}}$).
 	Для группы $g$ вычисляется коэффициент вариации числа пар
@@ -271,11 +325,14 @@ G_{\mathrm{tar}}=
 
 	\item \textbf{Недельный паттерн} ($s_{\mathrm{pat}}$).
 	Для $(g,s,c,\mathrm{weekday}(d))$ штрафуется использование
-	более одного различного слота:
-	\[
-	P_{\mathrm{pat}}=
-	\sum \max\bigl(|\{t\}|-1,\,0\bigr).
-	\]
+	более одного различного слота по \formref{eq:wfc-pattern}:
+	\begin{equation}
+		P_{\mathrm{pat}}=
+		\sum \max\bigl(|\{t\}|-1,\,0\bigr).
+		\label{eq:wfc-pattern}
+	\end{equation}
+	\formwhere{где $P_{\mathrm{pat}}$~--- штраф за нарушение недельного паттерна;
+		\formwherenext{$\{t\}$}{множество слотов, используемых для данной комбинации $(g,s,c,\mathrm{weekday}(d))$}.}
 \end{enumerate}
 
 \paragraph{Операторы мутации}
@@ -370,7 +427,7 @@ holiday\_repair. Каждая попытка --- до $40$ случайных
 
 \paragraph{Время выполнения} Построение первичного расписания методом WFC на использованной конфигурации сервера занимает порядка 6~часов. Эволюционная оптимизация в режиме 1000~поколений выполняется около 24~часов; по графику изменения целевой функции (см.~\figref{fig:evolution}) значение приспособленности к концу прогона продолжает монотонно улучшаться, то есть алгоритм не достигает плато в пределах заданного лимита поколений.
 
-\paragraph{Сравнение с ручным расписанием} Для сопоставления качества решений все варианты оценены единой целевой функцией $F$ (формулы~\eqref{eq:fitness}--\eqref{eq:fitness-soft}), включая расписание, составленное вручную сотрудниками УМУ и загруженное в систему (см. \figref{fig:og}). Помимо итогового значения $F$, зафиксированы диагностические показатели, напрямую влияющие на мягкие критерии (см.~\tabref{tab:exp-comparison}).
+\paragraph{Сравнение с ручным расписанием} Для сопоставления качества решений все варианты оценены единой целевой функцией $F$ (формулы~\formref{eq:fitness}--\formref{eq:fitness-soft}), включая расписание, составленное вручную сотрудниками УМУ и загруженное в систему (см. \figref{fig:og}). Помимо итогового значения $F$, зафиксированы диагностические показатели, напрямую влияющие на мягкие критерии (см.~\tabref{tab:exp-comparison}).
 
 \begin{figure}[H]
 	\centering
@@ -432,7 +489,7 @@ holiday\_repair. Каждая попытка --- до $40$ случайных
 \paragraph{Назначение по занятиям}
 
 Для каждого назначенного занятия $(g,d,t,s,c,\ell)$ в порядке
-обхода расписания строится множество допустимых аудиторий:
+обхода расписания строится множество допустимых аудиторий \formref{eq:admissible-classrooms}:
 \begin{equation}
 	A_{\mathrm{adm}}(g,d,t,s,c)=
 	\bigl\{
@@ -443,8 +500,16 @@ holiday\_repair. Каждая попытка --- до $40$ случайных
 	\bigr\},
 	\label{eq:admissible-classrooms}
 \end{equation}
-где $G_{\mathrm{tar}}$ --- целевые группы занятия
-(одна группа для семинара/лабораторной, поток --- для лекции).
+\formwhere{где $A_{\mathrm{adm}}(g,d,t,s,c)$~--- множество допустимых аудиторий для занятия;
+	\formwherenext{$g$}{учебная группа};
+	\formwherenext{$d$}{дата занятия};
+	\formwherenext{$t$}{номер временного слота};
+	\formwherenext{$s$}{дисциплина};
+	\formwherenext{$c$}{тип занятия (лекция, семинар, лабораторная)};
+	\formwherenext{$a$}{аудитория из множества $A$};
+	\formwherenext{$\mathrm{cap}(a)$}{вместимость аудитории};
+	\formwherenext{$\mathrm{equip}(a)$}{оборудование аудитории};
+	\formwherenext{$G_{\mathrm{tar}}$}{целевые группы занятия (одна группа для семинара или лабораторной, поток~--- для лекции)}.}
 
 Выбор аудитории выполняется жадным образом с учётом уже
 назначенных занятий группы $g$ в тот же день $d$:
