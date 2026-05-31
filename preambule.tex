@@ -15,8 +15,8 @@
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 \setsansfont{Arial}
-\setmonofont{Cascadia Code SemiLight}%[Scale=0.865] 
-             
+\setmonofont{Cascadia Code SemiLight}%[Scale=0.865]
+
 
 \usepackage{polyglossia}
 \setdefaultlanguage[babelshorthands=true]{russian}
@@ -63,7 +63,7 @@
 %===================================================
 
 \usepackage{longtable} %многостраничные таблицы
-\usepackage{tabularx} %таблицы с полями автоширины 
+\usepackage{tabularx} %таблицы с полями автоширины
 \usepackage{array}
 
 
@@ -209,45 +209,45 @@
 \usepackage{caption}
 
 %Разделитель номер рисунка
-\DeclareCaptionLabelSeparator{dot}{.~}  
-%Разделитель номер таблицы         
-\DeclareCaptionLabelSeparator{dot_tbl}{.\\}            
+\DeclareCaptionLabelSeparator{dot}{.~}
+%Разделитель номер таблицы
+\DeclareCaptionLabelSeparator{dot_tbl}{.\\}
 
 %Подпись рис. центр
 \captionsetup[figure]{
 	name=Рис.,
 	justification=centering,
-	labelsep=dot, 
+	labelsep=dot,
 	format=plain,
 	font={onehalfspacing},
-	%skip=0ex, 
-	belowskip=-2ex plus 4pt minus 2pt , 
-	%aboveskip=1ex plus 4pt minus 2pt 
-}                       
+	%skip=0ex,
+	belowskip=-2ex plus 4pt minus 2pt ,
+	%aboveskip=1ex plus 4pt minus 2pt
+}
 
 %Подпись табл. справа
 \captionsetup[table]{
 	name=Таблица,
 	justification=raggedleft,
-	labelsep=dot_tbl, 
-	format=plain, 
+	labelsep=dot_tbl,
+	format=plain,
 	singlelinecheck=false,
 	font={onehalfspacing},
-	%belowskip=1ex plus 4pt minus 2pt, 
-	%aboveskip=1ex  plus 4pt minus 2pt 
-} 
+	%belowskip=1ex plus 4pt minus 2pt,
+	%aboveskip=1ex  plus 4pt minus 2pt
+}
 
 %Подпись листинг. справа
 \captionsetup[listing]{
 	justification=raggedleft,
-	labelsep=dot_tbl, 
-	format=plain, 
-	position=above, 
+	labelsep=dot_tbl,
+	format=plain,
+	position=above,
 	singlelinecheck=false,
-	font={onehalfspacing}, 
-	%belowskip=1 ex plus 4pt minus 2pt , 
-	aboveskip=-1.4ex  plus 4pt minus 2pt 
-} 
+	font={onehalfspacing},
+	%belowskip=1 ex plus 4pt minus 2pt ,
+	aboveskip=-1.4ex  plus 4pt minus 2pt
+}
 
 
 %В рисунках и таблиц приложений используем префикс П
@@ -276,12 +276,12 @@
 % Список литературы
 %===================================================
 
-\usepackage[style=gost-numeric, 
-		sorting=none, 
+\usepackage[style=gost-numeric,
+		sorting=none,
 		%defernumbers=true,
-		]{biblatex}  
+		]{biblatex}
 \addbibresource{vrkbibliograpgy.bib}
-\urlstyle{same} 
+\urlstyle{same}
 
 
 
@@ -333,7 +333,7 @@
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecfont}{\normalfont}        % обычный шрифт
 \renewcommand{\cftsecpagefont}{\normalfont}    % шрифт номеров страниц
-\setlength{\cftbeforesecskip}{0.0em} 
+\setlength{\cftbeforesecskip}{0.0em}
 
 
 \setlength{\cftsubsecnumwidth}{\widthof{0.0.\ }}
@@ -341,14 +341,14 @@
 \renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsubsecfont}{\normalfont}        % обычный шрифт
 \renewcommand{\cftsubsecpagefont}{\normalfont}    % шрифт номеров страниц
-\setlength{\cftbeforesubsecskip}{0.0em} 
+\setlength{\cftbeforesubsecskip}{0.0em}
 
 \setlength{\cftsubsubsecnumwidth}{\widthof{0.0.0.\ }}
 \renewcommand{\cftsubsubsecaftersnum}{. } % Точка после номера параграфа
 \renewcommand{\cftsubsubsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsubsubsecfont}{\normalfont}        % обычный шрифт
 \renewcommand{\cftsubsubsecpagefont}{\normalfont}    % шрифт номеров страниц
-\setlength{\cftbeforesubsubsecskip}{0.0em} 
+\setlength{\cftbeforesubsubsecskip}{0.0em}
 
 %Главы капсом
 %https://tex.stackexchange.com/questions/156916/how-to-make-section-name-uppercase-in-toc
@@ -367,24 +367,24 @@
 % Переопределяем формат для приложений
 
 \appto\appendix{%
-	
-	%\renewcommand{\thesection}{\arabic{section}} 
-	
+
+	%\renewcommand{\thesection}{\arabic{section}}
+
 	\renewcommand{\thesection}{\Asbuk{section}} %почему то опять вернули буквы в приложения
-	
+
 	\titleformat{\section}[block]
 	{\bfseries\raggedleft} % Полужирный, по центру, прописные
 	{Приложение \thesection.} % Нумерация с точкой
 	{0em} % Расстояние между номером и текстом
 	{\\} % Код перед заголовком
-	[\vspace{0ex}] 
-	
+	[\vspace{0ex}]
+
 	\titleformat{\subsection}[block]
 	{\centering\bfseries}
 	{\thesubsection.\ }
 	{0em}
 	{}
-	
+
 	{ }% Настройки оглавления для приложений
 	\addtocontents{toc}{%
 		\protect\renewcommand{\protect\cftsecpresnum}{Приложение }%
@@ -397,12 +397,12 @@
 %Имеют номер, но не светятся в оглавлении
 \newcommand{\hiddensubsection}[1]{%
 	\addtocounter{subsection}{1}%
-	\subsection*{\thesubsection. #1}%	
+	\subsection*{\thesubsection. #1}%
 }
 
 \newcommand{\hiddensubsubsection}[1]{%
 	\addtocounter{subsubsection}{1}%
-	\subsubsection*{\thesubsubsection. #1}%	
+	\subsubsection*{\thesubsubsection. #1}%
 }
 
 
@@ -454,7 +454,7 @@
 \setlength{\intextsep}{1.6em plus 2pt minus 2pt}    % для float'ов внутри текста
 
 
-\SetupFloatingEnvironment{listing}{name=Листинг} 
+\SetupFloatingEnvironment{listing}{name=Листинг}
 %\renewcommand{\lstlistingname}{Листинг}
 
 %для длинных листингов
@@ -473,14 +473,28 @@
 
 \usepackage{enumitem} %упарвление списками
 
-\setlist[enumerate]{nosep, leftmargin=1cm }  
-\setlist[itemize]{nosep, leftmargin=1cm}
+\setlist[enumerate]{
+  nosep,
+  leftmargin=0.5cm + 3ex,
+  labelwidth=3ex,
+  labelsep=0pt,
+  label=\arabic*.~,
+}
 
-%\setlist[enumerate,1]{leftmargin=1.25cm +2ex + \labelsep }  
-%\setlist[itemize,1]{leftmargin=1.25cm +2ex + \labelsep }
+\setlist[enumerate,1]{
+  leftmargin=1.0cm + 3ex,
+}
 
-\setlist[enumerate,1]{leftmargin = \parindent }  
-\setlist[itemize,1]{leftmargin = \parindent  }
+\setlist[itemize]{
+  nosep,
+  leftmargin=0.5cm + 3ex,
+  labelwidth=3ex,
+  labelsep=0pt,
+}
+
+\setlist[itemize,1]{
+  leftmargin=1.0cm + 3ex,
+}
 
 % русские буквы в счетчике https://tex.stackexchange.com/questions/720496/how-to-make-cyrillic-alphabet-numbering-in-enumerate-with-enumitem-and-polygloss
 \makeatletter
@@ -500,7 +514,7 @@
 \usepackage{ifthen}
 
 \usepackage{marginnote} %заметки на полях
-\reversemarginpar 
+\reversemarginpar
 \setlength{\marginparwidth}{25mm}
 \usepackage[textsize=tiny]{todonotes}
 
@@ -515,11 +529,11 @@
 	\usepackage{layout} %Позволяет использовать команду \layout для печати структуры страницы
 	\usepackage{layouts} %еще мног о команд для откладки
 	\usepackage{showframe} %Рамки фокруг листа
-	
+
 	\AtBeginDocument{%
 		\input{debug_page.tex}%
 	}
-	
+
 \fi
 
 
@@ -527,7 +541,7 @@
 
 
 %===================================================
-% Пакет hyperref. 
+% Пакет hyperref.
 % Должен подключатся последним.
 % Он необходим для работы с ссылками
 % И меняет работу других пакетов
@@ -550,11 +564,11 @@
 \makeatletter
 % Команда для записи в .aux
 \newcommand{\writetoaux}[2]{%
-	
+
 	\immediate\write\@auxout{%
 		\string\global\string\@namedef{vkr#1}{#2}%
 	}%
-	
+
 }
 \makeatother
 
@@ -605,25 +619,25 @@
 		«Московский государственный технологический университет «СТАНКИН»\\
 		(ФГАОУ ВО <<МГТУ <<СТАНКИН>>) \\
 	}
-	
-	
-	
+
+
+
 	\vspace{-0.75em}\noindent\rule{\textwidth}{0.4pt}\vspace{2ex}
-	
-	\noindent	
+
+	\noindent
 %	\begin{minipage}[t]{0.3\textwidth}
 %		\bfseries
 %		Институт\\
 %		Информационных\\
-%		Технологий\\	
+%		Технологий\\
 %	\end{minipage}
 %	\hfill
 %	\begin{minipage}[t]{\widthof{\bfseries Вычислительных систем}+1pt}
 %		\bfseries
 %		Кафедра\\
 %		Информационных\\
-%		Технологий и\\ 
-%		Вычислительных систем\\	
+%		Технологий и\\
+%		Вычислительных систем\\
 %	\end{minipage}
 	\begin{minipage}[t]{0.4\textwidth}
 		\bfseries
@@ -654,21 +668,21 @@
 	\fi%
 	\ifx\tmpB\empty\else%
 	,\space\tmpB%
-	\fi%	
+	\fi%
 }
 
 %степ. , зван., если нет то должность
 \def\insertPersonInfoA#1{%
-	
+
 	\edef\tmpZ{\csname vkr#1Position\endcsname}%
 	\edef\tmpA{\csname vkr#1DegreeShort\endcsname}%
 	\edef\tmpB{\csname vkr#1TitleShort\endcsname}%
 	\ifx\tmpA\emptystr%
-	\ifx\tmpB\empty%	
+	\ifx\tmpB\empty%
 	\tmpZ%
 	\else%
 	Error In #1 info!%
-	\fi%		
+	\fi%
 	\else%
 	\tmpA%
 	\ifx\tmpB\empty\else%
@@ -688,7 +702,7 @@
 	\fi%
 	\ifx\tmpB\empty\else%
 	,\space\tmpB%
-	\fi%	
+	\fi%
 }
 
 
